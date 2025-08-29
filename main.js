@@ -173,7 +173,7 @@ function downloadSubtitles() {
   const a = document.createElement("a");
 
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-  const filename = originalFilename.replace(".srt", `_edited_${timestamp}.srt`);
+  const filename = originalFilename.replace(".srt", `.srt`);
 
   a.href = url;
   a.download = filename;

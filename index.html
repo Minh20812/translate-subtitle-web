@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="main.css" />
+    <title>Quản lý Phụ đề SRT</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎬 Quản lý Phụ đề SRT</h1>
+        <p>Import, chỉnh sửa và tải xuống phụ đề một cách dễ dàng</p>
+      </div>
+
+      <div class="main-content">
+        <div class="upload-section" id="uploadSection">
+          <h3 style="margin-bottom: 20px; color: #666">
+            📁 Chọn file phụ đề SRT
+          </h3>
+          <p style="margin-bottom: 20px; color: #888">
+            Kéo thả file vào đây hoặc click để chọn
+          </p>
+          <button
+            class="upload-btn"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            Chọn file SRT
+          </button>
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            accept=".srt"
+            onchange="handleFileSelect(event)"
+          />
+        </div>
+
+        <div class="controls">
+          <div>
+            <span id="fileInfo" style="color: #666; font-style: italic"></span>
+          </div>
+          <div style="display: flex; gap: 15px">
+            <button
+              class="download-btn"
+              id="downloadBtn"
+              onclick="downloadSubtitles()"
+            >
+              💾 Tải xuống SRT
+            </button>
+            <button class="clear-btn" id="clearBtn" onclick="clearSubtitles()">
+              🗑️ Xóa
+            </button>
+          </div>
+        </div>
+
+        <div class="subtitle-display" id="subtitleDisplay"></div>
+
+        <div class="info-box" id="infoBox">
+          <h3>📋 Hướng dẫn sử dụng:</h3>
+          <ul>
+            <li>
+              <strong>Import:</strong> Chọn file SRT từ máy tính hoặc kéo thả
+              vào vùng upload
+            </li>
+            <li>
+              <strong>Dịch thuật:</strong> Click chuột phải vào bất kỳ đoạn text
+              nào và chọn "Translate to Vietnamese"
+            </li>
+            <li>
+              <strong>Chỉnh sửa:</strong> Text có thể được chọn và copy để chỉnh
+              sửa ở nơi khác
+            </li>
+            <li>
+              <strong>Tải xuống:</strong> Click nút "Tải xuống SRT" để lưu phụ
+              đề hiện tại (bao gồm cả text đã dịch)
+            </li>
+            <li>
+              <strong>Format:</strong> File tải xuống sẽ giữ nguyên định dạng
+              SRT chuẩn
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>

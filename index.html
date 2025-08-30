@@ -3,15 +3,397 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="stylesheet" href="main.css" />
-    <title>Quản lý Phụ đề SRT</title>
+    <title>Quản lý Phụ đề SRT - Batch Mode</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #2196f3, #21cbf3);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        padding: 40px;
+      }
+
+      .upload-section {
+        background: #f8f9fa;
+        border: 3px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 30px;
+        transition: all 0.3s ease;
+      }
+
+      .upload-section:hover {
+        border-color: #2196f3;
+        background: #f0f8ff;
+      }
+
+      .upload-section.dragover {
+        border-color: #21cbf3;
+        background: #e3f2fd;
+        transform: scale(1.02);
+      }
+
+      .upload-btn {
+        background: linear-gradient(135deg, #2196f3, #21cbf3);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 8px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        margin: 10px;
+      }
+
+      .upload-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      /* File Queue Management */
+      .file-queue {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        display: none;
+      }
+
+      .file-queue h3 {
+        color: #2196f3;
+        margin-bottom: 15px;
+      }
+
+      .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #2196f3;
+      }
+
+      .file-item.current {
+        border-left-color: #4caf50;
+        background: #e8f5e8;
+      }
+
+      .file-item.completed {
+        border-left-color: #9e9e9e;
+        background: #f5f5f5;
+        opacity: 0.7;
+      }
+
+      .file-item.skipped {
+        border-left-color: #ff9800;
+        background: #fff3e0;
+        opacity: 0.8;
+      }
+
+      .file-info {
+        flex: 1;
+      }
+
+      .file-name {
+        font-weight: bold;
+        color: #333;
+      }
+
+      .file-status {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-small {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-skip {
+        background: #ff9800;
+        color: white;
+      }
+
+      .btn-remove {
+        background: #f44336;
+        color: white;
+      }
+
+      .btn-download {
+        background: #4caf50;
+        color: white;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .batch-controls {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .download-btn,
+      .clear-btn {
+        background: linear-gradient(135deg, #4caf50, #45a049);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: none;
+      }
+
+      .clear-btn {
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+      }
+
+      .download-btn:hover,
+      .clear-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .subtitle-display {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        min-height: 400px;
+        padding: 20px;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        overflow-y: auto;
+        max-height: 600px;
+        display: none;
+      }
+
+      .subtitle-display.visible:not(.show-all) {
+        display: block;
+      }
+
+      .subtitle-display.visible.show-all {
+        display: grid !important;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 15px;
+        max-height: none;
+        overflow-y: visible;
+        padding: 20px;
+      }
+
+      @media (max-width: 1024px) {
+        .subtitle-display.visible.show-all {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .subtitle-display.visible.show-all {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .subtitle-entry {
+        margin-bottom: 25px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #2196f3;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        break-inside: avoid;
+        height: fit-content;
+      }
+
+      .subtitle-display.visible.show-all .subtitle-entry {
+        margin-bottom: 0;
+        height: fit-content;
+      }
+
+      .subtitle-entry:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+      }
+
+      .subtitle-number {
+        font-weight: bold;
+        color: #2196f3;
+        margin-bottom: 5px;
+      }
+
+      .subtitle-timestamp {
+        color: #666;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+      }
+
+      .subtitle-text {
+        color: #333;
+        line-height: 1.5;
+        user-select: text;
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+      }
+
+      /* Bulk Paste Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 80%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal h3 {
+        color: #2196f3;
+        margin-bottom: 20px;
+      }
+
+      .paste-area {
+        width: 100%;
+        min-height: 300px;
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        font-family: "Consolas", monospace;
+        font-size: 14px;
+        resize: vertical;
+      }
+
+      .modal-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+
+      .info-box {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        display: none;
+      }
+
+      .info-box h3 {
+        color: #1976d2;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 15px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #45a049);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          padding: 20px;
+        }
+        .modal-content {
+          width: 95%;
+          margin: 10% auto;
+        }
+        .batch-controls {
+          flex-direction: column;
+          width: 100%;
+        }
+        .batch-controls button {
+          width: 100%;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>🎬 Quản lý Phụ đề SRT</h1>
-        <p>Import, chỉnh sửa và tải xuống phụ đề một cách dễ dàng</p>
+        <h1>🎬 Quản lý Phụ đề SRT - Batch Mode</h1>
+        <p>Import nhiều file, dịch hàng loạt và quản lý dễ dàng</p>
       </div>
 
       <div class="main-content">
@@ -20,13 +402,19 @@
             📁 Chọn file phụ đề SRT
           </h3>
           <p style="margin-bottom: 20px; color: #888">
-            Kéo thả file vào đây hoặc click để chọn
+            Kéo thả nhiều file vào đây hoặc click để chọn
           </p>
           <button
             class="upload-btn"
             onclick="document.getElementById('fileInput').click()"
           >
-            Chọn file SRT
+            📂 Chọn một file
+          </button>
+          <button
+            class="upload-btn"
+            onclick="document.getElementById('multiFileInput').click()"
+          >
+            📚 Chọn nhiều file
           </button>
           <input
             type="file"
@@ -35,56 +423,930 @@
             accept=".srt"
             onchange="handleFileSelect(event)"
           />
+          <input
+            type="file"
+            id="multiFileInput"
+            class="file-input"
+            accept=".srt"
+            multiple
+            onchange="handleMultiFileSelect(event)"
+          />
         </div>
 
-        <div class="subtitle-display" id="subtitleDisplay"></div>
+        <!-- File Queue -->
+        <div class="file-queue" id="fileQueue">
+          <h3>📋 Danh sách file đang xử lý</h3>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div id="fileList"></div>
+          <div style="text-align: center; margin-top: 15px">
+            <button
+              class="upload-btn"
+              onclick="showBulkPasteModal()"
+              style="background: linear-gradient(135deg, #9c27b0, #7b1fa2)"
+            >
+              📝 Paste hàng loạt cho tất cả file
+            </button>
+          </div>
+        </div>
 
         <div class="controls">
           <div>
             <span id="fileInfo" style="color: #666; font-style: italic"></span>
           </div>
-          <div style="display: flex; gap: 15px">
+          <div class="batch-controls">
+            <button
+              class="upload-btn"
+              id="showAllBtn"
+              onclick="toggleShowAll()"
+              style="
+                display: none;
+                background: linear-gradient(135deg, #ff9800, #f57c00);
+                padding: 12px 25px;
+              "
+            >
+              📜 Hiển thị 10 cột
+            </button>
+            <button
+              class="upload-btn"
+              id="autoScrollBtn"
+              onclick="startAutoScroll()"
+              style="
+                display: none;
+                background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+                padding: 12px 25px;
+              "
+            >
+              🔄 Auto Scroll
+            </button>
             <button
               class="download-btn"
               id="downloadBtn"
-              onclick="downloadSubtitles()"
+              onclick="downloadCurrentSubtitle()"
             >
-              💾 Tải xuống SRT
+              💾 Tải file hiện tại
             </button>
-            <button class="clear-btn" id="clearBtn" onclick="clearSubtitles()">
-              🗑️ Xóa
+            <button
+              class="download-btn"
+              id="downloadAllBtn"
+              onclick="downloadAllCompleted()"
+              style="
+                background: linear-gradient(135deg, #2196f3, #1976d2);
+                display: none;
+              "
+            >
+              📦 Tải tất cả đã hoàn thành
+            </button>
+            <button class="clear-btn" id="clearBtn" onclick="clearAll()">
+              🗑️ Xóa tất cả
             </button>
           </div>
         </div>
 
+        <div class="subtitle-display" id="subtitleDisplay"></div>
+
+        <!-- Bulk Paste Modal -->
+        <div id="bulkPasteModal" class="modal">
+          <div class="modal-content">
+            <h3>📝 Paste nội dung dịch hàng loạt</h3>
+            <p style="margin-bottom: 15px; color: #666">
+              Paste tất cả nội dung đã dịch vào đây. Mỗi file sẽ được phân tách
+              bằng dòng trống hoặc dấu phân cách.
+            </p>
+            <textarea
+              id="bulkPasteArea"
+              class="paste-area"
+              placeholder="Paste tất cả nội dung dịch vào đây...
+
+Ví dụ:
+File 1 - Subtitle 1 content
+File 1 - Subtitle 2 content
+...
+
+---
+
+File 2 - Subtitle 1 content
+File 2 - Subtitle 2 content
+..."
+            ></textarea>
+            <div class="modal-buttons">
+              <button class="clear-btn" onclick="closeBulkPasteModal()">
+                ❌ Hủy
+              </button>
+              <button class="download-btn" onclick="processBulkPaste()">
+                ✅ Áp dụng
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="info-box" id="infoBox">
-          <h3>📋 Hướng dẫn sử dụng:</h3>
+          <h3>📋 Hướng dẫn sử dụng Batch Mode:</h3>
           <ul>
             <li>
-              <strong>Import:</strong> Chọn file SRT từ máy tính hoặc kéo thả
-              vào vùng upload
+              <strong>📂 Upload nhiều file:</strong> Chọn "Chọn nhiều file" hoặc
+              kéo thả nhiều file SRT
             </li>
             <li>
-              <strong>Dịch thuật:</strong> Click chuột phải vào bất kỳ đoạn text
-              nào và chọn "Translate to Vietnamese"
+              <strong>📝 Paste hàng loạt:</strong> Dịch tất cả file cùng lúc và
+              paste vào modal
             </li>
             <li>
-              <strong>Chỉnh sửa:</strong> Text có thể được chọn và copy để chỉnh
-              sửa ở nơi khác
+              <strong>⏭️ Bỏ qua file:</strong> Click "Bỏ qua" để chuyển sang
+              file tiếp theo
             </li>
             <li>
-              <strong>Tải xuống:</strong> Click nút "Tải xuống SRT" để lưu phụ
-              đề hiện tại (bao gồm cả text đã dịch)
+              <strong>🗑️ Xóa file:</strong> Click "Xóa" để loại bỏ file khỏi
+              danh sách
             </li>
             <li>
-              <strong>Format:</strong> File tải xuống sẽ giữ nguyên định dạng
-              SRT chuẩn
+              <strong>💾 Tải xuống:</strong>
+              <ul style="margin-top: 8px">
+                <li>"Tải file hiện tại" - Tải file đang hiển thị</li>
+                <li>
+                  "Tải tất cả đã hoàn thành" - Tải tất cả file đã xử lý xong
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>🎯 Workflow khuyến nghị:</strong>
+              <ul style="margin-top: 8px">
+                <li>1. Upload tất cả file SRT cần dịch</li>
+                <li>2. Dùng "Hiển thị 3 cột" để xem tất cả phụ đề</li>
+                <li>3. Copy tất cả text → dịch bằng Google Translate</li>
+                <li>4. Paste vào modal "Paste hàng loạt"</li>
+                <li>5. Tải tất cả file đã hoàn thành</li>
+              </ul>
             </li>
           </ul>
         </div>
       </div>
     </div>
 
-    <script src="main.js"></script>
+    <script>
+      let fileQueue = [];
+      let currentFileIndex = 0;
+      let subtitleData = [];
+
+      // Drag and drop functionality
+      const uploadSection = document.getElementById("uploadSection");
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        uploadSection.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        uploadSection.addEventListener(eventName, highlight, false);
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        uploadSection.addEventListener(eventName, unhighlight, false);
+      });
+
+      uploadSection.addEventListener("drop", handleDrop, false);
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      function highlight() {
+        uploadSection.classList.add("dragover");
+      }
+
+      function unhighlight() {
+        uploadSection.classList.remove("dragover");
+      }
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = Array.from(dt.files).filter((file) =>
+          file.name.toLowerCase().endsWith(".srt")
+        );
+
+        if (files.length > 0) {
+          if (files.length === 1) {
+            handleFile(files[0]);
+          } else {
+            handleMultipleFiles(files);
+          }
+        }
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleFile(file);
+        }
+      }
+
+      function handleMultiFileSelect(event) {
+        const files = Array.from(event.target.files);
+        if (files.length > 0) {
+          handleMultipleFiles(files);
+        }
+      }
+
+      function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith(".srt")) {
+          alert("Vui lòng chọn file có định dạng .srt");
+          return;
+        }
+
+        // Single file mode
+        fileQueue = [
+          {
+            file: file,
+            name: file.name,
+            status: "current",
+            data: null,
+            translated: false,
+          },
+        ];
+        currentFileIndex = 0;
+
+        processCurrentFile();
+      }
+
+      function handleMultipleFiles(files) {
+        const srtFiles = files.filter((file) =>
+          file.name.toLowerCase().endsWith(".srt")
+        );
+        if (srtFiles.length === 0) {
+          alert("Không có file SRT nào được tìm thấy");
+          return;
+        }
+
+        // Multi file mode
+        fileQueue = srtFiles.map((file, index) => ({
+          file: file,
+          name: file.name,
+          status: index === 0 ? "current" : "pending",
+          data: null,
+          translated: false,
+        }));
+        currentFileIndex = 0;
+
+        showFileQueue();
+        processCurrentFile();
+      }
+
+      function showFileQueue() {
+        document.getElementById("fileQueue").style.display = "block";
+        updateFileList();
+        updateProgress();
+      }
+
+      function updateFileList() {
+        const fileList = document.getElementById("fileList");
+        fileList.innerHTML = "";
+
+        fileQueue.forEach((fileItem, index) => {
+          const div = document.createElement("div");
+          div.className = `file-item ${fileItem.status}`;
+
+          let statusText = "";
+          switch (fileItem.status) {
+            case "current":
+              statusText = "🔄 Đang xử lý";
+              break;
+            case "completed":
+              statusText = "✅ Đã hoàn thành";
+              break;
+            case "skipped":
+              statusText = "⏭️ Đã bỏ qua";
+              break;
+            default:
+              statusText = "⏳ Đang chờ";
+          }
+
+          div.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${fileItem.name}</div>
+                        <div class="file-status">${statusText}</div>
+                    </div>
+                    <div class="file-actions">
+                        ${
+                          fileItem.status === "current"
+                            ? `
+                            <button class="btn-small btn-skip" onclick="skipCurrentFile()">⏭️ Bỏ qua</button>
+                            <button class="btn-small btn-download" onclick="downloadCurrentSubtitle()">💾 Tải</button>
+                        `
+                            : ""
+                        }
+                        ${
+                          fileItem.status === "completed"
+                            ? `
+                            <button class="btn-small btn-download" onclick="downloadSpecificFile(${index})">💾 Tải lại</button>
+                        `
+                            : ""
+                        }
+                        <button class="btn-small btn-remove" onclick="removeFile(${index})">🗑️ Xóa</button>
+                    </div>
+                `;
+          fileList.appendChild(div);
+        });
+      }
+
+      function updateProgress() {
+        const completed = fileQueue.filter(
+          (f) => f.status === "completed" || f.status === "skipped"
+        ).length;
+        const total = fileQueue.length;
+        const percentage = (completed / total) * 100;
+
+        document.getElementById("progressFill").style.width = percentage + "%";
+      }
+
+      function processCurrentFile() {
+        if (currentFileIndex >= fileQueue.length) {
+          showMessage("🎉 Đã xử lý xong tất cả file!", "success");
+          document.getElementById("downloadAllBtn").style.display =
+            "inline-block";
+          return;
+        }
+
+        const currentFile = fileQueue[currentFileIndex];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const content = e.target.result;
+          parseSubtitles(content);
+          currentFile.data = subtitleData;
+          displaySubtitles();
+          showControls();
+
+          document.getElementById("fileInfo").textContent = `Đang xử lý: ${
+            currentFile.name
+          } (${currentFileIndex + 1}/${fileQueue.length})`;
+        };
+
+        reader.readAsText(currentFile.file, "UTF-8");
+      }
+
+      function parseSubtitles(content) {
+        subtitleData = [];
+        const blocks = content.trim().split("\n\n");
+
+        blocks.forEach((block) => {
+          const lines = block.trim().split("\n");
+          if (lines.length >= 3) {
+            const number = lines[0].trim();
+            const timestamp = lines[1].trim();
+            const text = lines.slice(2).join("\n");
+
+            subtitleData.push({
+              number: number,
+              timestamp: timestamp,
+              text: text,
+            });
+          }
+        });
+      }
+
+      function displaySubtitles() {
+        const display = document.getElementById("subtitleDisplay");
+        display.innerHTML = "";
+
+        subtitleData.forEach((subtitle, index) => {
+          const entryDiv = document.createElement("div");
+          entryDiv.className = "subtitle-entry";
+          entryDiv.innerHTML = `
+                    <div class="subtitle-number">${subtitle.number}</div>
+                    <div class="subtitle-timestamp">${subtitle.timestamp}</div>
+                    <div class="subtitle-text" data-index="${index}">${subtitle.text}</div>
+                `;
+          display.appendChild(entryDiv);
+        });
+
+        display.classList.add("visible");
+        document.getElementById("infoBox").style.display = "block";
+        setupTextChangeTracking();
+      }
+
+      function setupTextChangeTracking() {
+        const textElements = document.querySelectorAll(".subtitle-text");
+
+        textElements.forEach((element, index) => {
+          element.setAttribute("contenteditable", "true");
+
+          const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              if (
+                mutation.type === "childList" ||
+                mutation.type === "characterData"
+              ) {
+                const currentText = element.textContent || element.innerText;
+                if (index < subtitleData.length) {
+                  subtitleData[index].text = currentText;
+                }
+              }
+            });
+          });
+
+          observer.observe(element, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+          });
+
+          element.addEventListener("input", function () {
+            if (index < subtitleData.length) {
+              subtitleData[index].text =
+                element.textContent || element.innerText;
+            }
+          });
+
+          element.addEventListener("paste", function () {
+            setTimeout(() => {
+              if (index < subtitleData.length) {
+                subtitleData[index].text =
+                  element.textContent || element.innerText;
+              }
+            }, 100);
+          });
+
+          setInterval(() => {
+            const currentText = element.textContent || element.innerText;
+            if (
+              index < subtitleData.length &&
+              currentText !== subtitleData[index].text
+            ) {
+              subtitleData[index].text = currentText;
+            }
+          }, 500);
+        });
+      }
+
+      function showControls() {
+        document.getElementById("downloadBtn").style.display = "inline-block";
+        document.getElementById("clearBtn").style.display = "inline-block";
+        document.getElementById("showAllBtn").style.display = "inline-block";
+        document.getElementById("autoScrollBtn").style.display = "inline-block";
+      }
+
+      function skipCurrentFile() {
+        if (currentFileIndex < fileQueue.length) {
+          fileQueue[currentFileIndex].status = "skipped";
+          nextFile();
+        }
+      }
+
+      function nextFile() {
+        if (currentFileIndex < fileQueue.length) {
+          fileQueue[currentFileIndex].status = "completed";
+          fileQueue[currentFileIndex].data = [...subtitleData]; // Save current data
+        }
+
+        currentFileIndex++;
+
+        if (currentFileIndex < fileQueue.length) {
+          fileQueue[currentFileIndex].status = "current";
+          updateFileList();
+          updateProgress();
+          processCurrentFile();
+        } else {
+          showMessage("🎉 Đã xử lý xong tất cả file!", "success");
+          document.getElementById("downloadAllBtn").style.display =
+            "inline-block";
+          updateProgress();
+        }
+      }
+
+      function removeFile(index) {
+        if (
+          confirm(`Bạn có chắc muốn xóa file "${fileQueue[index].name}" không?`)
+        ) {
+          fileQueue.splice(index, 1);
+
+          if (index < currentFileIndex) {
+            currentFileIndex--;
+          } else if (
+            index === currentFileIndex &&
+            currentFileIndex >= fileQueue.length
+          ) {
+            currentFileIndex--;
+          }
+
+          if (fileQueue.length === 0) {
+            clearAll();
+          } else {
+            updateFileList();
+            updateProgress();
+            if (index === currentFileIndex) {
+              processCurrentFile();
+            }
+          }
+        }
+      }
+
+      function toggleShowAll() {
+        const display = document.getElementById("subtitleDisplay");
+        const btn = document.getElementById("showAllBtn");
+
+        if (display.classList.contains("show-all")) {
+          display.classList.remove("show-all");
+          btn.textContent = "📜 Hiển thị 3 cột";
+          btn.style.background = "linear-gradient(135deg, #FF9800, #F57C00)";
+          showMessage("📋 Trở lại chế độ cuộn thông thường", "info");
+        } else {
+          display.classList.add("show-all");
+          btn.textContent = "📏 Thu gọn";
+          btn.style.background = "linear-gradient(135deg, #4CAF50, #45a049)";
+          showMessage(
+            "🎯 Hiển thị 3 cột! Bây giờ bạn có thể dịch tất cả cùng lúc!",
+            "success"
+          );
+        }
+      }
+
+      let autoScrollInterval = null;
+
+      function startAutoScroll() {
+        const display = document.getElementById("subtitleDisplay");
+        const btn = document.getElementById("autoScrollBtn");
+
+        if (display.classList.contains("show-all")) {
+          showMessage(
+            "⚠️ Vui lòng tắt chế độ 3 cột trước khi sử dụng Auto Scroll",
+            "info"
+          );
+          return;
+        }
+
+        if (autoScrollInterval) {
+          clearInterval(autoScrollInterval);
+          autoScrollInterval = null;
+          btn.textContent = "🔄 Auto Scroll";
+          btn.style.background = "linear-gradient(135deg, #9C27B0, #7B1FA2)";
+          showMessage("⏹️ Đã dừng auto scroll", "info");
+        } else {
+          btn.textContent = "⏸️ Dừng Scroll";
+          btn.style.background = "linear-gradient(135deg, #f44336, #d32f2f)";
+          showMessage("▶️ Bắt đầu auto scroll...", "info");
+
+          let scrollPosition = 0;
+          const scrollStep = 200;
+          const scrollDelay = 2000;
+
+          autoScrollInterval = setInterval(() => {
+            scrollPosition += scrollStep;
+            display.scrollTo({
+              top: scrollPosition,
+              behavior: "smooth",
+            });
+
+            if (scrollPosition >= display.scrollHeight - display.clientHeight) {
+              clearInterval(autoScrollInterval);
+              autoScrollInterval = null;
+              btn.textContent = "🔄 Auto Scroll";
+              btn.style.background =
+                "linear-gradient(135deg, #9C27B0, #7B1FA2)";
+              showMessage("✅ Đã scroll hết!", "success");
+            }
+          }, scrollDelay);
+        }
+      }
+
+      function syncDataFromDOM() {
+        const textElements = document.querySelectorAll(".subtitle-text");
+        textElements.forEach((element, index) => {
+          if (index < subtitleData.length) {
+            const currentText = element.textContent || element.innerText;
+            subtitleData[index].text = currentText;
+          }
+        });
+      }
+
+      function downloadCurrentSubtitle() {
+        syncDataFromDOM();
+
+        let srtContent = "";
+        subtitleData.forEach((subtitle) => {
+          srtContent += `${subtitle.number}\n`;
+          srtContent += `${subtitle.timestamp}\n`;
+          srtContent += `${subtitle.text}\n\n`;
+        });
+
+        const blob = new Blob([srtContent], {
+          type: "text/plain;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        const timestamp = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/:/g, "-");
+        const currentFile = fileQueue[currentFileIndex];
+        const filename = currentFile
+          ? currentFile.name.replace(".merge4.srt", `.ts.merge4.srt`)
+          : `subtitle_translated_${timestamp}.srt`;
+
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showMessage("✅ File đã được tải xuống!", "success");
+
+        // Move to next file if in batch mode
+        if (fileQueue.length > 1) {
+          nextFile();
+        }
+      }
+
+      function downloadSpecificFile(index) {
+        const fileItem = fileQueue[index];
+        if (!fileItem || !fileItem.data) return;
+
+        let srtContent = "";
+        fileItem.data.forEach((subtitle) => {
+          srtContent += `${subtitle.number}\n`;
+          srtContent += `${subtitle.timestamp}\n`;
+          srtContent += `${subtitle.text}\n\n`;
+        });
+
+        const blob = new Blob([srtContent], {
+          type: "text/plain;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        const timestamp = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/:/g, "-");
+        const filename = fileItem.name.replace(
+          ".srt",
+          `_translated_${timestamp}.srt`
+        );
+
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showMessage(`✅ File ${fileItem.name} đã được tải xuống!`, "success");
+      }
+
+      function downloadAllCompleted() {
+        const completedFiles = fileQueue.filter(
+          (f) => f.status === "completed" && f.data
+        );
+
+        if (completedFiles.length === 0) {
+          showMessage("⚠️ Không có file nào đã hoàn thành!", "info");
+          return;
+        }
+
+        completedFiles.forEach((fileItem, index) => {
+          setTimeout(() => {
+            let srtContent = "";
+            fileItem.data.forEach((subtitle) => {
+              srtContent += `${subtitle.number}\n`;
+              srtContent += `${subtitle.timestamp}\n`;
+              srtContent += `${subtitle.text}\n\n`;
+            });
+
+            const blob = new Blob([srtContent], {
+              type: "text/plain;charset=utf-8",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+
+            const timestamp = new Date()
+              .toISOString()
+              .slice(0, 19)
+              .replace(/:/g, "-");
+            const filename = fileItem.name.replace(
+              ".srt",
+              `_translated_${timestamp}.srt`
+            );
+
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, index * 500); // Delay between downloads
+        });
+
+        showMessage(
+          `🎉 Đang tải ${completedFiles.length} file đã hoàn thành!`,
+          "success"
+        );
+      }
+
+      function showBulkPasteModal() {
+        document.getElementById("bulkPasteModal").style.display = "block";
+      }
+
+      function closeBulkPasteModal() {
+        document.getElementById("bulkPasteModal").style.display = "none";
+        document.getElementById("bulkPasteArea").value = "";
+      }
+
+      function processBulkPaste() {
+        const pasteContent = document
+          .getElementById("bulkPasteArea")
+          .value.trim();
+        if (!pasteContent) {
+          alert("Vui lòng paste nội dung vào!");
+          return;
+        }
+
+        // Split content by file separators (--- or multiple empty lines)
+        const fileSections = pasteContent
+          .split(/\n\s*---\s*\n|\n\s*\n\s*\n/)
+          .filter((section) => section.trim());
+
+        if (fileSections.length === 1) {
+          // Single section - apply to current file
+          applyTranslationToCurrentFile(fileSections[0]);
+        } else {
+          // Multiple sections - apply to multiple files
+          applyTranslationToMultipleFiles(fileSections);
+        }
+
+        closeBulkPasteModal();
+        showMessage(
+          `✅ Đã áp dụng nội dung dịch cho ${Math.min(
+            fileSections.length,
+            fileQueue.length
+          )} file!`,
+          "success"
+        );
+      }
+
+      function applyTranslationToCurrentFile(translatedContent) {
+        const lines = translatedContent
+          .trim()
+          .split("\n")
+          .filter((line) => line.trim());
+        const textElements = document.querySelectorAll(".subtitle-text");
+
+        let lineIndex = 0;
+        textElements.forEach((element, index) => {
+          if (lineIndex < lines.length) {
+            const translatedText = lines[lineIndex].trim();
+            if (translatedText) {
+              element.textContent = translatedText;
+              if (index < subtitleData.length) {
+                subtitleData[index].text = translatedText;
+              }
+              lineIndex++;
+            }
+          }
+        });
+
+        if (fileQueue[currentFileIndex]) {
+          fileQueue[currentFileIndex].translated = true;
+        }
+      }
+
+      function applyTranslationToMultipleFiles(fileSections) {
+        fileSections.forEach((section, fileIndex) => {
+          if (fileIndex >= fileQueue.length) return;
+
+          const lines = section
+            .trim()
+            .split("\n")
+            .filter((line) => line.trim());
+          const fileItem = fileQueue[fileIndex];
+
+          if (fileItem.data) {
+            let lineIndex = 0;
+            fileItem.data.forEach((subtitle, subtitleIndex) => {
+              if (lineIndex < lines.length) {
+                const translatedText = lines[lineIndex].trim();
+                if (translatedText) {
+                  fileItem.data[subtitleIndex].text = translatedText;
+                  lineIndex++;
+                }
+              }
+            });
+
+            fileItem.translated = true;
+            fileItem.status = "completed";
+          }
+        });
+
+        // If current file was updated, refresh display
+        if (
+          currentFileIndex < fileSections.length &&
+          fileQueue[currentFileIndex]
+        ) {
+          subtitleData = [...fileQueue[currentFileIndex].data];
+          displaySubtitles();
+        }
+
+        updateFileList();
+        updateProgress();
+      }
+
+      function clearAll() {
+        if (confirm("Bạn có chắc muốn xóa tất cả file không?")) {
+          if (autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+          }
+
+          fileQueue = [];
+          currentFileIndex = 0;
+          subtitleData = [];
+
+          const display = document.getElementById("subtitleDisplay");
+          display.classList.remove("visible", "show-all");
+          display.innerHTML = "";
+
+          document.getElementById("fileQueue").style.display = "none";
+          document.getElementById("downloadBtn").style.display = "none";
+          document.getElementById("downloadAllBtn").style.display = "none";
+          document.getElementById("clearBtn").style.display = "none";
+          document.getElementById("showAllBtn").style.display = "none";
+          document.getElementById("autoScrollBtn").style.display = "none";
+          document.getElementById("fileInfo").textContent = "";
+          document.getElementById("infoBox").style.display = "none";
+          document.getElementById("fileInput").value = "";
+          document.getElementById("multiFileInput").value = "";
+        }
+      }
+
+      function showMessage(message, type = "info") {
+        const messageDiv = document.createElement("div");
+        messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 400px;
+                ${
+                  type === "success"
+                    ? "background: #4CAF50;"
+                    : "background: #2196F3;"
+                }
+            `;
+        messageDiv.textContent = message;
+
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+          messageDiv.style.animation = "slideOut 0.3s ease";
+          setTimeout(() => {
+            if (messageDiv.parentNode) {
+              messageDiv.parentNode.removeChild(messageDiv);
+            }
+          }, 300);
+        }, 4000);
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        const modal = document.getElementById("bulkPasteModal");
+        if (event.target === modal) {
+          closeBulkPasteModal();
+        }
+      };
+
+      // Add CSS animations
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
   </body>
 </html>

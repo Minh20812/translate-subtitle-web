@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        color: white;
+        text-align: center;
+        padding: 30px;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .header p {
+        font-size: 1.2em;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .video-container {
+        margin-bottom: 40px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+      }
+
+      .video-container:hover {
+        transform: translateY(-5px);
+      }
+
+      .video-header {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 20px;
+        font-weight: bold;
+        font-size: 1.1em;
+      }
+
+      video {
+        width: 100%;
+        height: 400px;
+        background: #000;
+        outline: none;
+      }
+
+      .controls {
+        padding: 20px;
+        background: #f8f9fa;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+      }
+
+      .btn.secondary {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+      }
+
+      .btn.secondary:hover {
+        box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+      }
+
+      .status {
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 10px;
+        font-weight: bold;
+      }
+
+      .status.success {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+      }
+
+      .status.error {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        color: white;
+      }
+
+      .status.info {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .feature {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+      }
+
+      .feature h3 {
+        margin-bottom: 15px;
+        font-size: 1.3em;
+      }
+
+      @media (max-width: 768px) {
+        .content {
+          padding: 20px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .btn-group {
+          flex-direction: column;
+        }
+
+        video {
+          height: 250px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎬 Video Player Pro</h1>
+        <p>Phát video HLS và MP4 chất lượng cao</p>
+      </div>
+
+      <div class="content">
+        <!-- Video Player 1 -->
+        <div class="video-container">
+          <div class="video-header">📺 Video Player 1 - HLS Stream</div>
+          <video id="video1" controls preload="metadata">
+            Trình duyệt của bạn không hỗ trợ video HTML5.
+          </video>
+          <div class="controls">
+            <div class="btn-group">
+              <button class="btn" onclick="loadVideo1()">🎥 Tải Video 1</button>
+              <button class="btn secondary" onclick="playPause('video1')">
+                ⏯️ Play/Pause
+              </button>
+              <button class="btn secondary" onclick="fullscreen('video1')">
+                🔍 Toàn màn hình
+              </button>
+            </div>
+            <div id="status1" class="status info">
+              Nhấn "Tải Video 1" để bắt đầu phát
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Player 2 -->
+        <div class="video-container">
+          <div class="video-header">📺 Video Player 2 - M3U8 Stream</div>
+          <video id="video2" controls preload="metadata">
+            Trình duyệt của bạn không hỗ trợ video HTML5.
+          </video>
+          <div class="controls">
+            <div class="btn-group">
+              <button class="btn" onclick="loadVideo2()">🎥 Tải Video 2</button>
+              <button class="btn secondary" onclick="playPause('video2')">
+                ⏯️ Play/Pause
+              </button>
+              <button class="btn secondary" onclick="fullscreen('video2')">
+                🔍 Toàn màn hình
+              </button>
+            </div>
+            <div id="status2" class="status info">
+              Nhấn "Tải Video 2" để bắt đầu phát
+            </div>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="features">
+          <div class="feature">
+            <h3>🚀 HLS Support</h3>
+            <p>
+              Hỗ trợ phát video HLS (.m3u8) với chất lượng cao và tốc độ ổn định
+            </p>
+          </div>
+          <div class="feature">
+            <h3>📱 Responsive Design</h3>
+            <p>Giao diện thân thiện trên mọi thiết bị từ desktop đến mobile</p>
+          </div>
+          <div class="feature">
+            <h3>🎮 Easy Controls</h3>
+            <p>Điều khiển dễ dàng với các nút bấm trực quan và thân thiện</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Video URLs
+      const video1Url =
+        "https://vip.opstream90.com/share/3a1f85dfef891b2a3685ccb35efa807e";
+      const video2Url =
+        "https://vip.opstream90.com/20250822/10995_3a1f85df/index.m3u8";
+
+      function updateStatus(videoId, message, type = "info") {
+        const statusElement = document.getElementById(
+          `status${videoId.slice(-1)}`
+        );
+        statusElement.textContent = message;
+        statusElement.className = `status ${type}`;
+      }
+
+      function loadVideo1() {
+        const video = document.getElementById("video1");
+        updateStatus("video1", "⏳ Đang tải video...", "info");
+
+        // Thử phương pháp iframe embed trước
+        tryIframeMethod("video1", video1Url);
+      }
+
+      function tryIframeMethod(videoId, url) {
+        const container = document.getElementById(videoId).parentElement;
+        const videoElement = document.getElementById(videoId);
+
+        // Tạo iframe để embed video
+        const iframe = document.createElement("iframe");
+        iframe.src = url;
+        iframe.style.width = "100%";
+        iframe.style.height = "400px";
+        iframe.style.border = "none";
+        iframe.allowFullscreen = true;
+        iframe.allow = "autoplay; encrypted-media; picture-in-picture";
+
+        // Thay thế video element bằng iframe
+        videoElement.style.display = "none";
+        container.appendChild(iframe);
+
+        updateStatus(videoId, "✅ Video đang được tải qua iframe!", "success");
+
+        // Fallback nếu iframe không hoạt động
+        iframe.onload = function () {
+          updateStatus(videoId, "✅ Video đã sẵn sàng để phát!", "success");
+        };
+
+        iframe.onerror = function () {
+          // Nếu iframe thất bại, thử phương pháp HLS
+          container.removeChild(iframe);
+          videoElement.style.display = "block";
+          tryHLSMethod(videoId, url);
+        };
+      }
+
+      function tryHLSMethod(videoId, url) {
+        const video = document.getElementById(videoId);
+        updateStatus(videoId, "⏳ Thử phương pháp HLS...", "info");
+
+        try {
+          if (Hls.isSupported()) {
+            const hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              backBufferLength: 90,
+              xhrSetup: function (xhr, url) {
+                xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+              },
+            });
+
+            hls.loadSource(url);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+              updateStatus(videoId, "✅ Video HLS đã sẵn sàng!", "success");
+            });
+
+            hls.on(Hls.Events.ERROR, function (event, data) {
+              if (data.fatal) {
+                updateStatus(videoId, `❌ Lỗi HLS: ${data.details}`, "error");
+                tryDirectMethod(videoId, url);
+              }
+            });
+          } else {
+            tryDirectMethod(videoId, url);
+          }
+        } catch (error) {
+          updateStatus(videoId, `❌ Lỗi HLS: ${error.message}`, "error");
+          tryDirectMethod(videoId, url);
+        }
+      }
+
+      function tryDirectMethod(videoId, url) {
+        const video = document.getElementById(videoId);
+        updateStatus(videoId, "⏳ Thử phương pháp direct...", "info");
+
+        video.src = url;
+        video.load();
+
+        video.addEventListener("loadedmetadata", function () {
+          updateStatus(videoId, "✅ Video direct đã sẵn sàng!", "success");
+        });
+
+        video.addEventListener("error", function (e) {
+          updateStatus(
+            videoId,
+            "❌ Không thể tải video. Hãy thử mở link trực tiếp trong tab mới",
+            "error"
+          );
+          showDirectLink(videoId, url);
+        });
+      }
+
+      function showDirectLink(videoId, url) {
+        const container = document
+          .getElementById(videoId)
+          .parentElement.querySelector(".controls");
+        const linkDiv = document.createElement("div");
+        linkDiv.innerHTML = `
+                <div style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 10px;">
+                    <strong>🔗 Link trực tiếp:</strong><br>
+                    <a href="${url}" target="_blank" style="color: #1976d2; word-break: break-all;">${url}</a>
+                    <br><br>
+                    <button class="btn" onclick="window.open('${url}', '_blank')">🚀 Mở trong tab mới</button>
+                </div>
+            `;
+        container.appendChild(linkDiv);
+      }
+
+      function loadVideo2() {
+        const video = document.getElementById("video2");
+        updateStatus("video2", "⏳ Đang tải video...", "info");
+
+        try {
+          if (Hls.isSupported()) {
+            const hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              backBufferLength: 90,
+            });
+
+            hls.loadSource(video2Url);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+              updateStatus(
+                "video2",
+                "✅ Video đã sẵn sàng để phát!",
+                "success"
+              );
+            });
+
+            hls.on(Hls.Events.ERROR, function (event, data) {
+              if (data.fatal) {
+                updateStatus(
+                  "video2",
+                  `❌ Lỗi: ${data.type} - ${data.details}`,
+                  "error"
+                );
+              }
+            });
+          } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = video2Url;
+            updateStatus("video2", "✅ Video đã sẵn sàng để phát!", "success");
+          } else {
+            updateStatus("video2", "❌ Trình duyệt không hỗ trợ HLS", "error");
+          }
+        } catch (error) {
+          updateStatus("video2", `❌ Lỗi tải video: ${error.message}`, "error");
+        }
+      }
+
+      function playPause(videoId) {
+        const video = document.getElementById(videoId);
+        if (video.paused) {
+          video.play().catch((e) => {
+            console.log("Lỗi phát video:", e);
+          });
+        } else {
+          video.pause();
+        }
+      }
+
+      function fullscreen(videoId) {
+        const video = document.getElementById(videoId);
+        if (video.requestFullscreen) {
+          video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) {
+          video.webkitRequestFullscreen();
+        } else if (video.mozRequestFullScreen) {
+          video.mozRequestFullScreen();
+        } else if (video.msRequestFullscreen) {
+          video.msRequestFullscreen();
+        }
+      }
+
+      // Auto-load videos when page loads (optional)
+      window.addEventListener("load", function () {
+        console.log("Trang đã tải xong. Sẵn sàng phát video!");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý Phụ đề SRT</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 5px;
+      }
+
+      .container {
+        max-width: fit-content;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #2196f3, #21cbf3);
+        color: white;
+        padding: 5px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        padding: 5px;
+      }
+
+      .upload-section {
+        background: #f8f9fa;
+        border: 3px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 5px;
+        text-align: center;
+        margin-bottom: 30px;
+        transition: all 0.3s ease;
+      }
+
+      .upload-section:hover {
+        border-color: #2196f3;
+        background: #f0f8ff;
+      }
+
+      .upload-section.dragover {
+        border-color: #21cbf3;
+        background: #e3f2fd;
+        transform: scale(1.02);
+      }
+
+      .upload-btn {
+        background: linear-gradient(135deg, #2196f3, #21cbf3);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 8px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .upload-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, #4caf50, #45a049);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: none;
+      }
+
+      .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+      }
+
+      .clear-btn {
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: none;
+      }
+
+      .clear-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+      }
+
+      .subtitle-display {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        min-height: 400px;
+        padding: 5px;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        overflow-y: auto;
+        max-height: 600px;
+        display: none;
+      }
+
+      /* Khi hiển thị nhưng chưa show-all - single column với scroll */
+      .subtitle-display.visible:not(.show-all) {
+        display: block;
+      }
+
+      /* Grid layout cho 3 cột khi show-all */
+      .subtitle-display.visible.show-all {
+        display: grid !important;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 15px;
+        max-height: none;
+        overflow-y: visible;
+        padding: 5px;
+      }
+
+      /* Responsive: 2 cột trên tablet */
+      @media (max-width: 1024px) {
+        .subtitle-display.visible.show-all {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* Responsive: 1 cột trên mobile */
+      @media (max-width: 768px) {
+        .subtitle-display.visible.show-all {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .subtitle-entry {
+        margin-bottom: 25px;
+        padding: 5px;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #2196f3;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        break-inside: avoid;
+        height: fit-content;
+      }
+
+      /* Grid layout cho subtitle entries */
+      .subtitle-display.show-all .subtitle-entry {
+        margin-bottom: 0;
+        height: fit-content;
+      }
+
+      .subtitle-entry:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+      }
+
+      .subtitle-number {
+        font-weight: bold;
+        color: #2196f3;
+        margin-bottom: 5px;
+      }
+
+      .subtitle-timestamp {
+        color: #666;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+      }
+
+      .subtitle-text {
+        color: #333;
+        line-height: 1.5;
+        user-select: text;
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+      }
+
+      .info-box {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 8px;
+        padding: 5px;
+        margin-top: 20px;
+        display: none;
+      }
+
+      .info-box h3 {
+        color: #1976d2;
+        margin-bottom: 10px;
+      }
+
+      .info-box ul {
+        color: #333;
+        margin-left: 20px;
+      }
+
+      .info-box li {
+        margin-bottom: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          padding: 5px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .download-btn,
+        .clear-btn {
+          width: 100%;
+        }
+
+        .container {
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎬 Quản lý Phụ đề SRT</h1>
+        <p>Import, chỉnh sửa và tải xuống phụ đề một cách dễ dàng</p>
+      </div>
+
+      <div class="main-content">
+        <div class="upload-section" id="uploadSection">
+          <h3 style="margin-bottom: 20px; color: #666">
+            📁 Chọn file phụ đề SRT
+          </h3>
+          <p style="margin-bottom: 20px; color: #888">
+            Kéo thả file vào đây hoặc click để chọn
+          </p>
+          <button
+            class="upload-btn"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            Chọn file SRT
+          </button>
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            accept=".srt"
+            onchange="handleFileSelect(event)"
+          />
+        </div>
+
+        <div class="controls">
+          <div>
+            <span id="fileInfo" style="color: #666; font-style: italic"></span>
+          </div>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap">
+            <button
+              class="upload-btn"
+              id="showAllBtn"
+              onclick="toggleShowAll()"
+              style="
+                display: none;
+                background: linear-gradient(135deg, #ff9800, #f57c00);
+                padding: 12px 25px;
+              "
+            >
+              📜 Hiển thị 10 cột
+            </button>
+            <button
+              class="upload-btn"
+              id="autoScrollBtn"
+              onclick="startAutoScroll()"
+              style="
+                display: none;
+                background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+                padding: 12px 25px;
+              "
+            >
+              🔄 Auto Scroll
+            </button>
+            <button
+              class="download-btn"
+              id="downloadBtn"
+              onclick="downloadSubtitles()"
+            >
+              💾 Tải xuống SRT
+            </button>
+            <button class="clear-btn" id="clearBtn" onclick="clearSubtitles()">
+              🗑️ Xóa
+            </button>
+          </div>
+        </div>
+
+        <div class="subtitle-display" id="subtitleDisplay"></div>
+
+        <div class="info-box" id="infoBox">
+          <h3>📋 Hướng dẫn sử dụng:</h3>
+          <ul>
+            <li>
+              <strong>Import:</strong> Chọn file SRT từ máy tính hoặc kéo thả
+              vào vùng upload
+            </li>
+            <li>
+              <strong>🔧 Các tùy chọn dịch:</strong>
+              <ul style="margin-top: 8px">
+                <li>
+                  <strong>"Hiển thị 3 cột":</strong> Chia thành 3 cột để dịch
+                  tất cả cùng lúc (responsive: 2 cột trên tablet, 1 cột trên
+                  mobile)
+                </li>
+                <li>
+                  <strong>"Auto Scroll":</strong> Tự động cuộn từng phần → dịch
+                  từng đoạn
+                </li>
+                <li>
+                  <strong>Thủ công:</strong> Cuộn và dịch từng phần như bình
+                  thường
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Dịch thuật:</strong> Click chuột phải vào text và chọn
+              "Translate to Vietnamese"
+            </li>
+            <li>
+              <strong>Tải xuống:</strong> Click nút "Tải xuống SRT" để lưu phụ
+              đề đã dịch
+            </li>
+            <li>
+              <strong>⚡ Khuyến nghị:</strong> Dùng "Hiển thị 3 cột" để dịch
+              nhanh nhất!
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let subtitleData = [];
+      let originalFilename = "";
+
+      // Drag and drop functionality
+      const uploadSection = document.getElementById("uploadSection");
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        uploadSection.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        uploadSection.addEventListener(eventName, highlight, false);
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        uploadSection.addEventListener(eventName, unhighlight, false);
+      });
+
+      uploadSection.addEventListener("drop", handleDrop, false);
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      function highlight() {
+        uploadSection.classList.add("dragover");
+      }
+
+      function unhighlight() {
+        uploadSection.classList.remove("dragover");
+      }
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files.length > 0) {
+          handleFile(files[0]);
+        }
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleFile(file);
+        }
+      }
+
+      function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith(".srt")) {
+          alert("Vui lòng chọn file có định dạng .srt");
+          return;
+        }
+
+        originalFilename = file.name;
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const content = e.target.result;
+          parseSubtitles(content);
+          displaySubtitles();
+          showControls();
+        };
+
+        reader.readAsText(file, "UTF-8");
+      }
+
+      function parseSubtitles(content) {
+        subtitleData = [];
+        const blocks = content.trim().split("\n\n");
+
+        blocks.forEach((block) => {
+          const lines = block.trim().split("\n");
+          if (lines.length >= 3) {
+            const number = lines[0].trim();
+            const timestamp = lines[1].trim();
+            const text = lines.slice(2).join("\n");
+
+            subtitleData.push({
+              number: number,
+              timestamp: timestamp,
+              text: text,
+            });
+          }
+        });
+      }
+
+      function displaySubtitles() {
+        const display = document.getElementById("subtitleDisplay");
+        display.innerHTML = "";
+
+        subtitleData.forEach((subtitle, index) => {
+          const entryDiv = document.createElement("div");
+          entryDiv.className = "subtitle-entry";
+          entryDiv.innerHTML = `
+                    <div class="subtitle-number">${subtitle.number}</div>
+                    <div class="subtitle-timestamp">${subtitle.timestamp}</div>
+                    <div class="subtitle-text" data-index="${index}">${subtitle.text}</div>
+                `;
+          display.appendChild(entryDiv);
+        });
+
+        // Thêm class visible thay vì chỉ thay đổi style.display
+        display.classList.add("visible");
+        document.getElementById("infoBox").style.display = "block";
+
+        // Add event listeners to track text changes
+        const textElements = display.querySelectorAll(".subtitle-text");
+        textElements.forEach((element, index) => {
+          // Use MutationObserver to detect changes
+          const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              if (
+                mutation.type === "childList" ||
+                mutation.type === "characterData"
+              ) {
+                subtitleData[index].text =
+                  element.textContent || element.innerText;
+              }
+            });
+          });
+
+          observer.observe(element, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+          });
+
+          // Also listen for paste events and manual editing
+          element.addEventListener("input", function () {
+            subtitleData[index].text = element.textContent || element.innerText;
+          });
+
+          // Periodically check for changes (for translation updates)
+          setInterval(() => {
+            const currentText = element.textContent || element.innerText;
+            if (currentText !== subtitleData[index].text) {
+              subtitleData[index].text = currentText;
+            }
+          }, 1000);
+        });
+      }
+
+      function showControls() {
+        document.getElementById("downloadBtn").style.display = "inline-block";
+        document.getElementById("clearBtn").style.display = "inline-block";
+        document.getElementById("showAllBtn").style.display = "inline-block";
+        document.getElementById("autoScrollBtn").style.display = "inline-block";
+        document.getElementById(
+          "fileInfo"
+        ).textContent = `File đã tải: ${originalFilename}`;
+      }
+
+      function toggleShowAll() {
+        const display = document.getElementById("subtitleDisplay");
+        const btn = document.getElementById("showAllBtn");
+
+        if (display.classList.contains("show-all")) {
+          display.classList.remove("show-all");
+          btn.textContent = "📜 Hiển thị 3 cột";
+          btn.style.background = "linear-gradient(135deg, #FF9800, #F57C00)";
+          showMessage("📋 Trở lại chế độ cuộn thông thường", "info");
+        } else {
+          display.classList.add("show-all");
+          btn.textContent = "📏 Thu gọn";
+          btn.style.background = "linear-gradient(135deg, #4CAF50, #45a049)";
+          showMessage(
+            "🎯 Hiển thị 3 cột! Bây giờ bạn có thể dịch tất cả cùng lúc!",
+            "success"
+          );
+        }
+      }
+
+      let autoScrollInterval = null;
+
+      function startAutoScroll() {
+        const display = document.getElementById("subtitleDisplay");
+        const btn = document.getElementById("autoScrollBtn");
+
+        // Không cho phép auto scroll khi đang ở chế độ 3 cột
+        if (display.classList.contains("show-all")) {
+          showMessage(
+            "⚠️ Vui lòng tắt chế độ 3 cột trước khi sử dụng Auto Scroll",
+            "info"
+          );
+          return;
+        }
+
+        if (autoScrollInterval) {
+          // Stop auto scroll
+          clearInterval(autoScrollInterval);
+          autoScrollInterval = null;
+          btn.textContent = "🔄 Auto Scroll";
+          btn.style.background = "linear-gradient(135deg, #9C27B0, #7B1FA2)";
+          showMessage("⏹️ Đã dừng auto scroll", "info");
+        } else {
+          // Start auto scroll
+          btn.textContent = "⏸️ Dừng Scroll";
+          btn.style.background = "linear-gradient(135deg, #f44336, #d32f2f)";
+          showMessage("▶️ Bắt đầu auto scroll để dịch từng phần...", "info");
+
+          let scrollPosition = 0;
+          const scrollStep = 200; // pixels per step
+          const scrollDelay = 2000; // 2 seconds delay between scrolls
+
+          autoScrollInterval = setInterval(() => {
+            scrollPosition += scrollStep;
+            display.scrollTo({
+              top: scrollPosition,
+              behavior: "smooth",
+            });
+
+            // Stop when reached bottom
+            if (scrollPosition >= display.scrollHeight - display.clientHeight) {
+              clearInterval(autoScrollInterval);
+              autoScrollInterval = null;
+              btn.textContent = "🔄 Auto Scroll";
+              btn.style.background =
+                "linear-gradient(135deg, #9C27B0, #7B1FA2)";
+              showMessage(
+                "✅ Đã scroll hết! Bây giờ bạn có thể tải xuống.",
+                "success"
+              );
+            }
+          }, scrollDelay);
+        }
+      }
+
+      function downloadSubtitles() {
+        // Đồng bộ hóa dữ liệu từ DOM hiện tại
+        syncDataFromDOM();
+
+        let srtContent = "";
+        subtitleData.forEach((subtitle) => {
+          srtContent += `${subtitle.number}\n`;
+          srtContent += `${subtitle.timestamp}\n`;
+          srtContent += `${subtitle.text}\n\n`;
+        });
+
+        // Create and download file
+        const blob = new Blob([srtContent], {
+          type: "text/plain;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        const timestamp = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace(/:/g, "-");
+        // const filename = originalFilename.replace(
+        //   ".srt",
+        //   `_edited_${timestamp}.srt`
+        // );
+        const filename = originalFilename.replace(
+          ".merge4.srt",
+          `.ts.merge4.srt`
+        );
+
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Show success message
+        showMessage("✅ Phụ đề đã được tải xuống thành công!", "success");
+      }
+
+      // Hàm đồng bộ dữ liệu từ DOM hiện tại
+      function syncDataFromDOM() {
+        const textElements = document.querySelectorAll(".subtitle-text");
+        textElements.forEach((element, index) => {
+          if (index < subtitleData.length) {
+            // Lấy nội dung hiện tại từ DOM (có thể đã được dịch)
+            const currentText = element.textContent || element.innerText;
+            subtitleData[index].text = currentText;
+          }
+        });
+      }
+
+      function clearSubtitles() {
+        if (confirm("Bạn có chắc muốn xóa tất cả phụ đề không?")) {
+          // Stop auto scroll if running
+          if (autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+            autoScrollInterval = null;
+          }
+
+          subtitleData = [];
+          document.getElementById("subtitleDisplay").style.display = "none";
+          document.getElementById("subtitleDisplay").innerHTML = "";
+          document
+            .getElementById("subtitleDisplay")
+            .classList.remove("show-all");
+          document.getElementById("downloadBtn").style.display = "none";
+          document.getElementById("clearBtn").style.display = "none";
+          document.getElementById("showAllBtn").style.display = "none";
+          document.getElementById("autoScrollBtn").style.display = "none";
+          document.getElementById("fileInfo").textContent = "";
+          document.getElementById("infoBox").style.display = "none";
+          document.getElementById("fileInput").value = "";
+        }
+      }
+
+      function showMessage(message, type = "info") {
+        const messageDiv = document.createElement("div");
+        messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                ${
+                  type === "success"
+                    ? "background: #4CAF50;"
+                    : "background: #2196F3;"
+                }
+            `;
+        messageDiv.textContent = message;
+
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+          messageDiv.style.animation = "slideOut 0.3s ease";
+          setTimeout(() => {
+            if (messageDiv.parentNode) {
+              messageDiv.parentNode.removeChild(messageDiv);
+            }
+          }, 300);
+        }, 3000);
+      }
+
+      // Add CSS animations
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>
